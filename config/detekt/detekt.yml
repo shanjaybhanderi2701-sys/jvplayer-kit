@@ -9,6 +9,11 @@ config:
 
 complexity:
   active: true
+  # The architecture test's encryption scan walks module → file → word/import with
+  # a couple of nested loops; allow that depth. Default (4) is too strict for it.
+  NestedBlockDepth:
+    active: true
+    threshold: 6
 
 style:
   active: true
@@ -22,8 +27,10 @@ naming:
   active: true
 
 # Function-name checks flag Kotlin backtick-quoted test names (`fun \`does x\`()`),
-# which we use for readable architecture-test descriptions — allow them.
+# which we use for readable architecture-test descriptions, and PascalCase
+# @Composable functions (Android/Compose convention) — allow both.
   FunctionNaming:
     active: true
     ignoreAnnotated:
       - "Test"
+      - "Composable"

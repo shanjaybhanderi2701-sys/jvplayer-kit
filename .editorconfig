@@ -15,6 +15,10 @@ max_line_length = 120
 # improving readability at this stage. Revisit as product code lands (later waves).
 ktlint_standard_multiline-expression-wrapping = disabled
 ktlint_standard_string-template-indent = disabled
+# @Composable functions are intentionally PascalCase (Android/Compose convention),
+# which the standard function-naming rule flags. Disable it project-wide; detekt's
+# FunctionNaming (with a Composable/Test exemption) still guards ordinary names.
+ktlint_standard_function-naming = disabled
 
 [*.md]
 trim_trailing_whitespace = false
