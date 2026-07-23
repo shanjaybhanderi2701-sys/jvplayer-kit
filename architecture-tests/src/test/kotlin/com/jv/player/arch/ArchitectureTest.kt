@@ -101,8 +101,20 @@ class ArchitectureTest {
     private fun buildFileText(module: String): String {
         val f = File(repoRoot, "$module/build.gradle.kts")
         assertTrue("Expected build file missing: ${f.relativeToRepo()}", f.exists())
-        return f.readText()
+        return f.readText().stripComments()
     }
+
+    /**
+     * Strips Kotlin `/* */` block and `//` line comments so the dependency-direction
+     * checks inspect real declarations, not prose. Explanatory comments legitimately
+     * mention "Media3"/"Compose"/":player-ui" (e.g. "has NO Media3 dependency") and
+     * must not trip the substring scans. `://` inside a comment-stripped line is not a
+     * concern here — build files reference repos via the Gradle layout API, not URLs.
+     */
+    private fun String.stripComments(): String =
+        replace(Regex("""/\*.*?\*/""", RegexOption.DOT_MATCHES_ALL), "")
+            .lines()
+            .joinToString("\n") { line -> line.substringBefore("//") }
 
     private fun File.relativeToRepo(): String = relativeTo(repoRoot).path
 
