@@ -1,0 +1,12 @@
+.gradle/
+build/
+**/build/
+local.properties
+.idea/
+*.iml
+.DS_Store
+captures/
+.externalNativeBuild/
+.cxx/
+# Keep the Gradle wrapper jar tracked (needed for CI / reproducible builds).
+!gradle/wrapper/gradle-wrapper.jar

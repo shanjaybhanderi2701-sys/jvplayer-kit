@@ -1,0 +1,23 @@
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 4
+
+[*.{kt,kts}]
+ktlint_code_style = ktlint_official
+max_line_length = 120
+# Wave 0 skeleton: silence two opinionated wrapping rules that add churn without
+# improving readability at this stage. Revisit as product code lands (later waves).
+ktlint_standard_multiline-expression-wrapping = disabled
+ktlint_standard_string-template-indent = disabled
+
+[*.md]
+trim_trailing_whitespace = false
+
+[*.{yml,yaml,toml,xml,json}]
+indent_size = 2

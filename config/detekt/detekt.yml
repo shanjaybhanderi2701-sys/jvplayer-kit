@@ -1,0 +1,29 @@
+# detekt baseline configuration for jvplayer-kit.
+# Intentionally lean for the Wave 0 skeleton; tightened as product code lands.
+build:
+  maxIssues: 0
+
+config:
+  validation: true
+  warningsAsErrors: false
+
+complexity:
+  active: true
+
+style:
+  active: true
+  MaxLineLength:
+    active: true
+    maxLineLength: 120
+  WildcardImport:
+    active: true
+
+naming:
+  active: true
+
+# Function-name checks flag Kotlin backtick-quoted test names (`fun \`does x\`()`),
+# which we use for readable architecture-test descriptions — allow them.
+  FunctionNaming:
+    active: true
+    ignoreAnnotated:
+      - "Test"
