@@ -11,8 +11,6 @@ import androidx.media3.datasource.TransferListener
 import com.jv.player.api.PlaybackMetadata
 import com.jv.player.api.PlaybackReader
 import com.jv.player.api.PlaybackSource
-import java.io.ByteArrayOutputStream
-import java.io.EOFException
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotSame
@@ -22,6 +20,8 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import java.io.ByteArrayOutputStream
+import java.io.EOFException
 
 /**
  * Unit tests for the [PlaybackSourceDataSource] seam adapter (APP-583 plan §3.3/§3.4).
@@ -34,7 +34,6 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34])
 class PlaybackSourceDataSourceTest {
-
     private val uri: Uri = Uri.parse("jvsource://fake")
 
     // --- byte-range reads ----------------------------------------------------------

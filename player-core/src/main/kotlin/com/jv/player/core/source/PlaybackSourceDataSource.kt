@@ -29,8 +29,8 @@ import java.io.EOFException
  */
 internal class PlaybackSourceDataSource(
     private val source: PlaybackSource,
-) : BaseDataSource(/* isNetwork = */ false) {
-
+    // isNetwork = false: this is a local/random-access source, not a network transfer.
+) : BaseDataSource(false) {
     private var reader: PlaybackReader? = null
     private var uri: Uri? = null
 

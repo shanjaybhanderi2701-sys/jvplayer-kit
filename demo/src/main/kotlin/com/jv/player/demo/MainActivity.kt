@@ -38,9 +38,9 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.ui.PlayerView
 import com.jv.player.core.JvPlayer
 import com.jv.player.demo.source.FilePlaybackSource
+import kotlinx.coroutines.delay
 import java.io.File
 import kotlin.random.Random
-import kotlinx.coroutines.delay
 
 /**
  * Wave 1 demo (APP-583 plan §4). Proves the SDK plays the plain test-media matrix

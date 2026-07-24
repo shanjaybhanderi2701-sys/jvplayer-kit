@@ -43,12 +43,13 @@ class FilePlaybackSource(
     }
 
     private companion object {
-        fun mimeFromExtension(name: String): String? = when {
-            name.endsWith(".mp4", ignoreCase = true) -> MimeTypes.VIDEO_MP4
-            name.endsWith(".m4v", ignoreCase = true) -> MimeTypes.VIDEO_MP4
-            name.endsWith(".mkv", ignoreCase = true) -> MimeTypes.VIDEO_MATROSKA
-            name.endsWith(".webm", ignoreCase = true) -> MimeTypes.VIDEO_WEBM
-            else -> null
-        }
+        fun mimeFromExtension(name: String): String? =
+            when {
+                name.endsWith(".mp4", ignoreCase = true) -> MimeTypes.VIDEO_MP4
+                name.endsWith(".m4v", ignoreCase = true) -> MimeTypes.VIDEO_MP4
+                name.endsWith(".mkv", ignoreCase = true) -> MimeTypes.VIDEO_MATROSKA
+                name.endsWith(".webm", ignoreCase = true) -> MimeTypes.VIDEO_WEBM
+                else -> null
+            }
     }
 }
