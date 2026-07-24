@@ -1,4 +1,3 @@
-@file:OptIn(UnstableApi::class)
 @file:Suppress("MagicNumber") // Demo harness: inline dp/timing values are fine here.
 
 package com.jv.player.demo
@@ -34,7 +33,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.media3.common.util.UnstableApi
 import androidx.media3.ui.PlayerView
 import com.jv.player.core.JvPlayer
 import com.jv.player.demo.source.FilePlaybackSource

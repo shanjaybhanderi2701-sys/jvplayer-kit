@@ -41,6 +41,13 @@ android {
     kotlinOptions {
         jvmTarget = "17"
     }
+
+    // The demo drives Media3 directly (PlayerView, MediaItem) to exercise the seam. Those
+    // APIs are @UnstableApi in Media3 1.5.1 with no stable alternative, so the per-call
+    // UnsafeOptInUsageError check is noise here, exactly as in :player-core.
+    lint {
+        disable += "UnsafeOptInUsageError"
+    }
 }
 
 dependencies {

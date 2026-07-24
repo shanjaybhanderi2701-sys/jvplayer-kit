@@ -23,6 +23,16 @@ android {
         jvmTarget = "17"
     }
 
+    // This module IS the Media3/ExoPlayer wiring layer (plan §2.1/§3.3). ExoPlayer,
+    // DataSource, DataSpec, SeekParameters, DefaultMediaSourceFactory are all annotated
+    // @UnstableApi in Media3 1.5.1 with no stable alternative — opting into them is the
+    // module's whole reason to exist, so the per-call UnsafeOptInUsageError check is pure
+    // noise here. (Media3's @UnstableApi is an androidx.annotation.experimental @RequiresOptIn
+    // marker, which Kotlin's @OptIn does not honour — only this Lint check enforces it.)
+    lint {
+        disable += "UnsafeOptInUsageError"
+    }
+
     // Robolectric drives the DataSource byte-range/seek/EOF unit tests on the JVM
     // (they need a real android.net.Uri / Media3 DataSpec, not the stubbed one).
     testOptions {

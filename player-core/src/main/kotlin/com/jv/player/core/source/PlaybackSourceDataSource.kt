@@ -1,10 +1,7 @@
-@file:OptIn(UnstableApi::class)
-
 package com.jv.player.core.source
 
 import android.net.Uri
 import androidx.media3.common.C
-import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.BaseDataSource
 import androidx.media3.datasource.DataSource
 import androidx.media3.datasource.DataSpec

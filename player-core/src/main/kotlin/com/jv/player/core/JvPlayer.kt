@@ -1,11 +1,8 @@
-@file:OptIn(UnstableApi::class)
-
 package com.jv.player.core
 
 import android.content.Context
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
-import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.SeekParameters
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
