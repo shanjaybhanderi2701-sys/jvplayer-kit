@@ -44,12 +44,20 @@ android {
 }
 
 dependencies {
+    // :player-ui re-exports :player-core (JvPlayer) and :player-api (PlaybackSource) as
+    // `api`, so the demo authors a FilePlaybackSource and drives JvPlayer through it.
+    // Wave 1 renders with the stock Media3 PlayerView (media3-ui); the custom
+    // SurfaceView control surface replaces it in Wave 2.
     implementation(project(":player-ui"))
+    implementation(libs.media3.ui)
+    implementation(libs.media3.common)
 
     implementation(libs.androidx.core.ktx)
+    implementation(libs.kotlinx.coroutines.android)
     implementation(libs.androidx.activity.compose)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.ui)
+    implementation(libs.androidx.compose.foundation)
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.compose.ui.tooling.preview)
     debugImplementation(libs.androidx.compose.ui.tooling)

@@ -23,6 +23,14 @@ android {
         jvmTarget = "17"
     }
 
+    // Robolectric drives the DataSource byte-range/seek/EOF unit tests on the JVM
+    // (they need a real android.net.Uri / Media3 DataSpec, not the stubbed one).
+    testOptions {
+        unitTests {
+            isIncludeAndroidResources = true
+        }
+    }
+
     publishing {
         singleVariant("release") {
             withSourcesJar()
@@ -40,6 +48,7 @@ dependencies {
 
     testImplementation(libs.junit)
     testImplementation(libs.kotlin.test.junit)
+    testImplementation(libs.robolectric)
 }
 
 afterEvaluate {
