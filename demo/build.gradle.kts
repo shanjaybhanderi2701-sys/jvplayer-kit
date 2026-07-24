@@ -42,9 +42,9 @@ android {
         jvmTarget = "17"
     }
 
-    // The demo drives Media3 directly (PlayerView, MediaItem) to exercise the seam. Those
-    // APIs are @UnstableApi in Media3 1.5.1 with no stable alternative, so the per-call
-    // UnsafeOptInUsageError check is noise here, exactly as in :player-core.
+    // The demo touches Media3 types (MimeTypes in FilePlaybackSource) to exercise the seam.
+    // Some Media3 surfaces are @UnstableApi in 1.5.1 with no stable alternative, so the
+    // per-call UnsafeOptInUsageError check is noise here, exactly as in :player-core.
     lint {
         disable += "UnsafeOptInUsageError"
     }
@@ -52,11 +52,10 @@ android {
 
 dependencies {
     // :player-ui re-exports :player-core (JvPlayer) and :player-api (PlaybackSource) as
-    // `api`, so the demo authors a FilePlaybackSource and drives JvPlayer through it.
-    // Wave 1 renders with the stock Media3 PlayerView (media3-ui); the custom
-    // SurfaceView control surface replaces it in Wave 2.
+    // `api`, so the demo authors a FilePlaybackSource and drives JvPlayer through it, then
+    // renders the Wave 2 SurfaceView control surface (PlayerSurface) from :player-ui.
+    // media3-common is kept explicit because FilePlaybackSource references MimeTypes directly.
     implementation(project(":player-ui"))
-    implementation(libs.media3.ui)
     implementation(libs.media3.common)
 
     implementation(libs.androidx.core.ktx)
