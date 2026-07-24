@@ -19,6 +19,13 @@ ktlint_standard_string-template-indent = disabled
 # which the standard function-naming rule flags. Disable it project-wide; detekt's
 # FunctionNaming (with a Composable/Test exemption) still guards ordinary names.
 ktlint_standard_function-naming = disabled
+# ktlint_official forces every function with >= 2 parameters onto a multiline
+# signature even when it fits well within max_line_length, which adds noise to the
+# many small 2-3 param functions in the engine/seam (openReader, read, setSource, …).
+# Raise the count threshold so signatures under 120 cols stay on one line; the
+# length-based wrapping above still splits genuinely long signatures. (`unset` here
+# would revert to the ktlint_official default of 2, so an explicit high value is used.)
+ktlint_function_signature_rule_force_multiline_when_parameter_count_greater_or_equal_than = 10
 
 [*.md]
 trim_trailing_whitespace = false
