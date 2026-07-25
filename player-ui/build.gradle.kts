@@ -63,6 +63,10 @@ dependencies {
     implementation(libs.androidx.compose.ui.tooling.preview)
     debugImplementation(libs.androidx.compose.ui.tooling)
 
+    // Lifecycle-aware background/foreground handling (W4): LocalLifecycleOwner + event observer
+    // let PlayerSurface pause when the host goes to the background (plan §6 W4).
+    implementation(libs.androidx.lifecycle.runtime.compose)
+
     implementation(libs.kotlinx.coroutines.android)
 
     testImplementation(libs.junit)

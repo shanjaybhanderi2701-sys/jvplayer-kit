@@ -1,9 +1,12 @@
 # jvplayer-kit
 
-A reusable, encryption-agnostic Android video/audio player SDK built on **Media3 / ExoPlayer**.
+A reusable, storage-agnostic Android video/audio player SDK built on **Media3 / ExoPlayer**.
 Consumed by CalcVault and JGallery; replaces the old low-confidence `player-kit`.
 
-> **Status:** Wave 0 — repo & CI scaffold. Modules are **empty skeletons**; no product/player code yet.
+> **Status:** Wave 4 (APP-589) — hardened & consumer-ready. `1.0.0` API freeze. Audio-only path,
+> audio focus, background/foreground pause, orientation, error/retry, and the resume-position API
+> are in. **Integration:** see [`docs/integration.md`](docs/integration.md) (with a copy-paste
+> sample) and [`docs/api-stability.md`](docs/api-stability.md) (frozen `:player-api` contract).
 
 ## ⚖️ Legal boundary (clean-room — binding)
 
@@ -43,6 +46,21 @@ CalcVault/JGallery open-source. Every module owner acknowledges this in writing 
 ./gradlew :demo:connectedDebugAndroidTest   # emulator/device instrumentation smoke
 ```
 
-Publishing scaffolding: `./gradlew publishReleasePublicationToInternalRepository` (credentials stubbed).
+### Consume the SDK
+```kotlin
+dependencies {
+    implementation("com.jv.player:player-ui:1.0.0")   // full Compose surface (re-exports core + api)
+    // implementation("com.jv.player:player-core:1.0.0") // engine only
+    // implementation("com.jv.player:player-api:1.0.0")  // author a PlaybackSource only
+}
+```
+Full walkthrough + sample snippet: [`docs/integration.md`](docs/integration.md). Supported media
+matrix (H.264/H.265 · mp4/mkv): integration guide §6.
+
+### Publish (internal Maven repo)
+```bash
+./gradlew publishAllPublicationsToInternalRepository   # → build/internal-maven-repo (credentials stubbed)
+```
+All three artifacts publish at the shared `jvplayer.version` (currently `1.0.0`) with sources JARs.
 
 CI (`.github/workflows/ci.yml`) runs build + unit tests + `:demo` emulator smoke + lint on every push/PR.

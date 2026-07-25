@@ -10,6 +10,7 @@
         <activity
             android:name=".MainActivity"
             android:exported="true"
+            android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboardHidden|layoutDirection"
             android:theme="@style/Theme.JvPlayerDemo">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

@@ -33,6 +33,7 @@ import com.jv.player.core.JvPlayer
 import com.jv.player.demo.source.FilePlaybackSource
 import com.jv.player.ui.PlayerSurface
 import java.io.File
+import java.util.concurrent.TimeUnit
 
 /**
  * Wave 2 demo (APP-583 plan §4, APP-587). The file picker feeds the `:player-ui`
@@ -89,8 +90,12 @@ private fun FilePicker(files: List<File>, mediaDir: File, onPick: (File) -> Unit
     }
     LazyColumn(modifier = Modifier.fillMaxSize().padding(16.dp)) {
         items(files) { file ->
+            // Surface any saved resume position so the resume-position API (W4) is observable on
+            // device: reopening a file the CEO left partway shows "· resume 1:23" and starts there.
+            val resumeMs = ResumeStore.positionFor(file.absolutePath)
+            val label = if (resumeMs > 0) "${file.name}  ·  resume ${formatClock(resumeMs)}" else file.name
             Text(
-                text = file.name,
+                text = label,
                 modifier = Modifier
                     .fillMaxWidth()
                     .clickable { onPick(file) }
@@ -113,8 +118,16 @@ private fun PlayerScreen(file: File, onBack: () -> Unit) {
     val engine = remember(file) { JvPlayer.create(context) }
 
     DisposableEffect(engine) {
-        engine.setSource(FilePlaybackSource(file))
-        onDispose { engine.release() }
+        val source = FilePlaybackSource(file)
+        // Resume-position API (W4): a host persists currentPositionMs keyed by source.id and passes
+        // it back as startPositionMs to resume where the user left off. Here the store is in-memory
+        // (survives return-to-picker); a real host would persist it across process death.
+        engine.setSource(source, startPositionMs = ResumeStore.positionFor(source.id))
+        onDispose {
+            // Save BEFORE releasing — currentPositionMs is unavailable after release().
+            ResumeStore.save(source.id, engine.currentPositionMs)
+            engine.release()
+        }
     }
 
     // Keep the screen on while a video is on screen (long-file stability run, §Acceptance).
@@ -143,3 +156,34 @@ private fun discoverMediaFiles(context: Context): List<File> =
         ?.filter { it.isFile }
         ?.sortedBy { it.name }
         ?: emptyList()
+
+/**
+ * Trivial in-memory resume store keyed by [PlaybackSource.id][com.jv.player.api.PlaybackSource.id],
+ * demonstrating the W4 resume-position API. Near the end of a file we clear the mark so a finished
+ * item restarts from the top rather than resuming one second before the credits. A production host
+ * would persist this (DataStore/Room) so resume survives process death — the SDK contract is the
+ * same either way: save [JvPlayer.currentPositionMs], pass it back as `startPositionMs`.
+ */
+private object ResumeStore {
+    private const val NEAR_END_MS = 5_000L
+    private val positions = mutableMapOf<String, Long>()
+
+    fun positionFor(id: String): Long = positions[id] ?: 0L
+
+    fun save(id: String, positionMs: Long) {
+        if (positionMs > NEAR_END_MS) positions[id] = positionMs else positions.remove(id)
+    }
+}
+
+/** Formats a ms position as `H:MM:SS` / `M:SS` for the picker's resume marker. */
+private fun formatClock(ms: Long): String {
+    val totalSeconds = TimeUnit.MILLISECONDS.toSeconds(ms)
+    val hours = totalSeconds / 3600
+    val minutes = (totalSeconds % 3600) / 60
+    val seconds = totalSeconds % 60
+    return if (hours > 0) {
+        "%d:%02d:%02d".format(hours, minutes, seconds)
+    } else {
+        "%d:%02d".format(minutes, seconds)
+    }
+}

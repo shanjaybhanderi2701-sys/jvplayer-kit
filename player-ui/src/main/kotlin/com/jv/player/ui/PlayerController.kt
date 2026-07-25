@@ -24,9 +24,9 @@ internal enum class PlaybackPhase { Idle, Buffering, Ready, Ended }
  * The design-facing controller façade the Compose UI binds to (APP-584 §10, plan §3.3).
  *
  * The UI depends on **only** this interface — never on Media3, the [JvPlayer] engine, or a
- * [com.jv.player.api.PlaybackSource]. That is what keeps the surface encryption-agnostic:
+ * [com.jv.player.api.PlaybackSource]. That is what keeps the surface storage-agnostic:
  * the scrubber deals only in `Long` positions, and no path/URI is ever reachable from here
- * (§10 encryption-agnostic guarantee). State reads are Compose-observable (snapshot state),
+ * (§10 storage-agnostic guarantee). State reads are Compose-observable (snapshot state),
  * so reading them inside a composable subscribes it to changes.
  *
  * Wave 2 exposes the control hooks the usable surface needs (play/pause, seek, resize,
@@ -89,6 +89,14 @@ internal interface PlayerController {
 
     /** Advances the resize control one step (Fit -> Fill -> Crop -> Fit). */
     fun cycleResizeMode()
+
+    /**
+     * Re-prepares the current source after a playback error (§6 W4 error/retry UX). Backs the
+     * "Retry" affordance the error overlay shows while [errorMessage] is non-null; clears the
+     * message optimistically so the overlay dismisses on tap and re-appears only if the retry
+     * also fails.
+     */
+    fun retry()
 
     /** Attaches the SurfaceView render target so the engine renders into it (§5.3). */
     fun attachVideoSurface(surfaceView: SurfaceView)
@@ -228,6 +236,13 @@ internal class MediaPlayerController(
 
     override fun cycleResizeMode() {
         resizeModeState = resizeModeState.next()
+    }
+
+    override fun retry() {
+        // Clear optimistically so the overlay dismisses immediately; onPlayerErrorChanged will
+        // re-populate errorMessage if the re-prepare fails again.
+        errorMessage = null
+        engine.retry()
     }
 
     override fun attachVideoSurface(surfaceView: SurfaceView) = player.setVideoSurfaceView(surfaceView)

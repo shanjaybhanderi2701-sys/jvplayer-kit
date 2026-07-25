@@ -54,7 +54,11 @@ dependencies {
     // Media3 — pinned lockstep via the version catalog (plan §2.4). No BOM exists.
     implementation(libs.media3.exoplayer)
     implementation(libs.media3.datasource)
-    implementation(libs.media3.common)
+    // media3-common is `api`, not `implementation`: JvPlayer's PUBLIC surface exposes Media3 types
+    // (`Player`, `Player.Listener`, `PlaybackException`), so an engine-only consumer must receive
+    // them transitively to call `addListener`/read `player` (W4 consumer-readiness). exoplayer and
+    // datasource stay `implementation` — they are never exposed on the public API.
+    api(libs.media3.common)
 
     testImplementation(libs.junit)
     testImplementation(libs.kotlin.test.junit)
