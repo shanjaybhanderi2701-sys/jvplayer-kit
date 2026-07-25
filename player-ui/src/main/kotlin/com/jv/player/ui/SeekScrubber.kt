@@ -45,9 +45,9 @@ internal class SeekScrubber(
     /** ACTION_MOVE: update the preview only. Must never commit. */
     fun moveTo(fraction: Float) {
         if (!isScrubbing) return
+        // Preview only — update local state, never touch the player. The single commit fires in
+        // release(); issuing a seek here is the ~30 seeks/second thrash §5.1 forbids.
         previewFraction = fraction.coerceIn(0f, 1f)
-        // NAIVE (RED): commits on every move — the ~30 seeks/second thrash §5.1 forbids.
-        onCommit(previewFraction)
     }
 
     /** ACTION_UP: commit exactly once at the final preview, then close the session. */

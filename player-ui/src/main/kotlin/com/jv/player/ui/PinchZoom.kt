@@ -29,9 +29,9 @@ internal class PinchZoom(
      * @param scaleFactor the *incremental* per-callback factor (`detector.scaleFactor`).
      */
     fun onScale(scaleFactor: Float): Float {
-        // NAIVE (RED): assigns the per-frame factor instead of accumulating it, so the scale
-        // collapses back toward the single-frame ratio every callback (the §5.2 juddering bug).
-        scale = scaleFactor.coerceIn(minScale, maxScale)
+        // Accumulate: multiply the incremental factor into the persisted scale (never reset it),
+        // then clamp. This is the §5.2 rule that makes a pinch grow smoothly instead of juddering.
+        scale = (scale * scaleFactor).coerceIn(minScale, maxScale)
         return scale
     }
 

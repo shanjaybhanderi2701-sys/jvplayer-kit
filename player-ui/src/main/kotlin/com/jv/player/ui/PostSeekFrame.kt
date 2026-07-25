@@ -33,7 +33,8 @@ internal object PostSeekFrame {
         toleranceUs: Long = ONE_FRAME_30FPS_US,
     ): Boolean {
         if (lastRenderedUs == null) return false
-        // NAIVE (RED): demands an exact-microsecond match, which a real decoded frame never hits.
-        return lastRenderedUs == targetUs
+        // A real decoded frame lands on a decode boundary at/just before T, not exactly on it —
+        // so "within one frame of the target" is the correct proof the sought frame was painted.
+        return kotlin.math.abs(lastRenderedUs - targetUs) <= toleranceUs
     }
 }
