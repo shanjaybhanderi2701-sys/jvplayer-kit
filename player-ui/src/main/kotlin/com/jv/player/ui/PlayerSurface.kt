@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -50,6 +51,15 @@ internal fun PlayerSurfaceContent(
 ) {
     var chromeVisible by remember { mutableStateOf(true) }
 
+    // Continuous pinch-zoom (§5.2 / mechanic 3c). One PinchZoom accumulator for the surface's
+    // lifetime — never re-created per gesture. `contentScale`/`pan*` are the Compose-observed
+    // transform the SurfaceView container renders; PinchZoom owns the accumulation logic (locked
+    // by PinchZoomTest), the state here just mirrors its output for recomposition.
+    val pinch = remember { PinchZoom() }
+    var contentScale by remember { mutableFloatStateOf(1f) }
+    var panX by remember { mutableFloatStateOf(0f) }
+    var panY by remember { mutableFloatStateOf(0f) }
+
     // Auto-hide only while playing (§3.2). Restarts whenever visibility or play-state flips.
     LaunchedEffect(chromeVisible, controller.isPlaying) {
         if (chromeVisible && controller.isPlaying) {
@@ -64,7 +74,13 @@ internal fun PlayerSurfaceContent(
             .background(Color.Black)
             .testTag("player_surface"),
     ) {
-        PlayerRenderView(controller = controller, modifier = Modifier.fillMaxSize())
+        PlayerRenderView(
+            controller = controller,
+            scale = contentScale,
+            panX = panX,
+            panY = panY,
+            modifier = Modifier.fillMaxSize(),
+        )
 
         // Gesture layer over the whole surface (§5). Sits above the render target and below
         // the chrome buttons, so button taps win where they are and everything else is a
@@ -72,7 +88,22 @@ internal fun PlayerSurfaceContent(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .playerGestures(controller = controller, onToggleChrome = { chromeVisible = !chromeVisible }),
+                .playerGestures(
+                    controller = controller,
+                    onToggleChrome = { chromeVisible = !chromeVisible },
+                    onPinch = { zoomFactor, pan ->
+                        contentScale = pinch.onScale(zoomFactor)
+                        if (contentScale > 1f) {
+                            // Pan only while zoomed in; clamped to the scaled content in the
+                            // render view. Reset to centre when the pinch returns to 1×.
+                            panX += pan.x
+                            panY += pan.y
+                        } else {
+                            panX = 0f
+                            panY = 0f
+                        }
+                    },
+                ),
         )
 
         if (chromeVisible) {

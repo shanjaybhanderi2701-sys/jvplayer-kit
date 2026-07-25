@@ -20,7 +20,10 @@ class SeekScrubberTest {
         var ends = 0
         var committedFraction = -1f
         val scrubber = SeekScrubber(
-            onCommit = { commits++; committedFraction = it },
+            onCommit = {
+                commits++
+                committedFraction = it
+            },
             onScrubStart = { starts++ },
             onScrubEnd = { ends++ },
         )

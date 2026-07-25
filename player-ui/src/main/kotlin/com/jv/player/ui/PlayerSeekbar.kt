@@ -61,6 +61,16 @@ internal fun PlayerSeekbar(controller: PlayerController, modifier: Modifier = Mo
         controller.seekTo((fraction.coerceIn(0f, 1f) * durationMs).roundToLong())
     }
 
+    // The load-bearing seek-on-release state machine (§5.1), locked by SeekScrubberTest. The drag
+    // callbacks below only *drive* it; the single commit + scrub session live in one tested place.
+    val scrubber = remember(durationMs) {
+        SeekScrubber(
+            onCommit = ::commit,
+            onScrubStart = controller::beginScrub,
+            onScrubEnd = controller::endScrub,
+        )
+    }
+
     Box(
         modifier = modifier
             .fillMaxWidth()
@@ -77,17 +87,19 @@ internal fun PlayerSeekbar(controller: PlayerController, modifier: Modifier = Mo
                                 onDragStart = { offset: Offset ->
                                     dragging = true
                                     dragFraction = fractionOf(offset.x, widthPx) // jump-to-finger latch (§4.2).
+                                    scrubber.begin(dragFraction)
                                 },
                                 onHorizontalDrag = { _, dragAmount ->
                                     val delta = if (widthPx > 0f) dragAmount / widthPx else 0f
                                     dragFraction = (dragFraction + delta).coerceIn(0f, 1f)
+                                    scrubber.moveTo(dragFraction) // preview only — never seeks (§4.1/§5.1).
                                 },
                                 onDragEnd = {
-                                    commit(dragFraction) // the one commit (§4.1).
+                                    scrubber.release() // the one commit (§4.1/§5.1).
                                     dragging = false
                                 },
                                 onDragCancel = {
-                                    commit(dragFraction)
+                                    scrubber.cancel()
                                     dragging = false
                                 },
                             )

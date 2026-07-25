@@ -38,8 +38,4 @@ internal object PlayerTokens {
 
     /** Progress poll cadence — drives the time row + seekbar thumb while NOT dragging. */
     const val PROGRESS_POLL_MS = 200L
-
-    /** Pinch scale that flips the resize mode Fit -> Crop (and back below it), §5.1 threshold. */
-    const val PINCH_ZOOM_IN_THRESHOLD = 1.15f
-    const val PINCH_ZOOM_OUT_THRESHOLD = 0.87f
 }

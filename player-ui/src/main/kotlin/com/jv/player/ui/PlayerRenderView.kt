@@ -25,9 +25,22 @@ import androidx.media3.ui.AspectRatioFrameLayout
  *
  * The engine is bound to the surface via [PlayerController.attachVideoSurface] on create and
  * released via [PlayerController.detachVideoSurface] on dispose, so no surface outlives the view.
+ *
+ * **Continuous pinch-zoom (§5.2 / mechanic 3c)** is applied as a view transform on the
+ * [AspectRatioFrameLayout] container — `scaleX`/`scaleY` + `translationX`/`Y` — not a Compose
+ * `graphicsLayer`. A [SurfaceView] punches its own hardware surface and honours *view*
+ * transforms on API ≥ 24 (this module's `minSdk`), whereas a Compose draw-layer transform would
+ * not move the punched surface. The container pivots about its centre, so pinch grows from the
+ * middle; [panX]/[panY] are clamped so the scaled content can never be dragged past its edges.
  */
 @Composable
-internal fun PlayerRenderView(controller: PlayerController, modifier: Modifier = Modifier) {
+internal fun PlayerRenderView(
+    controller: PlayerController,
+    scale: Float,
+    panX: Float,
+    panY: Float,
+    modifier: Modifier = Modifier,
+) {
     val resizeMode = controller.resizeMode
     val aspectRatio = controller.videoAspectRatio
 
@@ -54,6 +67,14 @@ internal fun PlayerRenderView(controller: PlayerController, modifier: Modifier =
             // A known ratio letterboxes correctly; 0f tells AspectRatioFrameLayout to fill
             // its bounds (used before the first frame reports a size).
             frame.setAspectRatio(aspectRatio)
+            // Continuous zoom transform (§5.2). Pivots about the container centre.
+            frame.scaleX = scale
+            frame.scaleY = scale
+            // Clamp pan to the overscaled margin so an edge can never be dragged into view.
+            val maxTx = frame.width * (scale - 1f) / 2f
+            val maxTy = frame.height * (scale - 1f) / 2f
+            frame.translationX = if (scale > 1f) panX.coerceIn(-maxTx, maxTx) else 0f
+            frame.translationY = if (scale > 1f) panY.coerceIn(-maxTy, maxTy) else 0f
         },
     )
 }

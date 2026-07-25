@@ -55,7 +55,8 @@ internal fun PlayerTopBar(title: String, onBack: () -> Unit, modifier: Modifier 
 /**
  * Bottom bar (design §3.1): the time row + seekbar + resize-mode control. The time row shows
  * elapsed / duration in `H:MM:SS`, `--:--` until a real duration is known (§7.1). The resize
- * button cycles Fit -> Fill -> Crop (§3.4) and stays in sync with pinch (§5.1).
+ * button cycles the discrete Fit -> Fill -> Crop presets (§3.4); continuous pinch-zoom (§5.2) is
+ * a separate transform layer, so preset and pinch never fight.
  */
 @Composable
 internal fun PlayerBottomBar(controller: PlayerController, modifier: Modifier = Modifier) {

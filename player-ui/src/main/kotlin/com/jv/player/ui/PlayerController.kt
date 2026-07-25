@@ -34,6 +34,7 @@ internal enum class PlaybackPhase { Idle, Buffering, Ready, Ended }
  * signal and capability flags (§10) land with their consumers in later waves.
  */
 @Stable
+@Suppress("TooManyFunctions") // §5.1/§5.3 add the scrub-session + post-seek hooks; the seam is one cohesive surface.
 internal interface PlayerController {
     val isPlaying: Boolean
     val phase: PlaybackPhase
@@ -50,11 +51,33 @@ internal interface PlayerController {
     val resizeMode: ResizeMode
     val errorMessage: String?
 
+    /**
+     * Presentation time (µs) of the last frame pushed to the surface, or `null` if none has
+     * rendered since the most recent [seekTo] (§5.3 post-seek render hook / telemetry). Reset to
+     * `null` on each [seekTo] so [com.jv.player.ui.PostSeekFrame] waits for a *fresh* frame at the
+     * target.
+     */
+    val lastRenderedFrameUs: Long?
+
+    /** True once the engine has painted a first frame to the surface (§5.3 / §10). */
+    val renderedFirstFrame: Boolean
+
     fun play()
 
     fun pause()
 
     fun playPause()
+
+    /**
+     * Opens a scrub session for the duration of a seekbar drag (§5.1). On Media3 ≥ 1.6 this is
+     * where `setScrubbingModeEnabled(true)` would attach; at the pinned 1.5.1 there is no such API,
+     * so it is a documented seam today. The single-commit-on-release invariant is enforced by the
+     * caller ([SeekScrubber]) regardless.
+     */
+    fun beginScrub()
+
+    /** Closes the scrub session opened by [beginScrub], after the single committed [seekTo]. */
+    fun endScrub()
 
     /** Single committed seek (design §4 release-commit). Clamped to `[0, duration]`. */
     fun seekTo(positionMs: Long)
@@ -114,6 +137,15 @@ internal class MediaPlayerController(
     override var errorMessage: String? by mutableStateOf(null)
         private set
 
+    override var renderedFirstFrame: Boolean by mutableStateOf(false)
+        private set
+
+    // Written from the video render thread (per-frame), so it is a plain @Volatile field rather
+    // than Compose snapshot state — a telemetry/test hook, not a value the chrome recomposes on.
+    @Volatile
+    private var lastRenderedUs: Long = C.TIME_UNSET
+    override val lastRenderedFrameUs: Long? get() = lastRenderedUs.takeIf { it != C.TIME_UNSET }
+
     private val listener = object : Player.Listener {
         override fun onIsPlayingChanged(isPlaying: Boolean) {
             this@MediaPlayerController.isPlaying = isPlaying
@@ -131,10 +163,17 @@ internal class MediaPlayerController(
         override fun onPlayerErrorChanged(error: PlaybackException?) {
             errorMessage = error?.errorCodeName
         }
+
+        override fun onRenderedFirstFrame() {
+            renderedFirstFrame = true
+        }
     }
 
     fun bind() {
         engine.addListener(listener)
+        // Record every rendered frame's presentation time so the post-seek gate (§5.3) can confirm
+        // a frame at/near the seek target painted — even while paused.
+        engine.setOnVideoFrameRendered { presentationTimeUs -> lastRenderedUs = presentationTimeUs }
         // Seed from current engine state so first composition reflects reality, not defaults.
         isPlaying = player.isPlaying
         phase = player.playbackState.toPhase()
@@ -145,6 +184,7 @@ internal class MediaPlayerController(
 
     fun unbind() {
         engine.removeListener(listener)
+        engine.setOnVideoFrameRendered(null)
     }
 
     /** Polled from the surface (position/buffered/duration are not push events in Media3). */
@@ -163,9 +203,19 @@ internal class MediaPlayerController(
         if (player.isPlaying) player.pause() else player.play()
     }
 
+    // No engine scrubbing API at the pinned Media3 1.5.1 (setScrubbingModeEnabled first ships at
+    // 1.6.0); these are the documented seam where it will attach on a version bump. The single
+    // commit-on-release that §5.1 requires is enforced by SeekScrubber, not by scrubbing mode.
+    override fun beginScrub() = Unit
+
+    override fun endScrub() = Unit
+
     override fun seekTo(positionMs: Long) {
         val duration = durationMs
         val target = if (duration > 0) positionMs.coerceIn(0L, duration) else positionMs.coerceAtLeast(0L)
+        // Invalidate the last rendered frame so the post-seek gate (§5.3) waits for a fresh frame
+        // at/near the new target rather than reporting the pre-seek one.
+        lastRenderedUs = C.TIME_UNSET
         engine.seekTo(target)
         this.positionMs = target
     }

@@ -3,6 +3,7 @@ package com.jv.player.ui
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.pointer.pointerInput
 
 /** Horizontal gesture zones over the video surface (design §5 thirds). */
@@ -13,17 +14,20 @@ private enum class Zone { Left, Center, Right }
  * *outside* the seekbar's owned band, so the seekbar's exclusive pointer ownership (§4.3) is
  * never contested — this layer only ever sees pointers the seekbar didn't claim.
  *
- * Wave 2 wires every critical mechanic so it is reachable in `:demo` (the issue's ask):
  *  - **single tap** anywhere → toggle chrome (§5 center) — here applied surface-wide.
  *  - **double tap** left / right third → discrete ∓/±10s seek (§5); center third → play/pause.
- *  - **pinch** anywhere → resize/zoom: crossing the §5.1 thresholds flips Fit ⇄ Crop and keeps
- *    the `[⤢]` button and the gesture in agreement.
+ *  - **pinch** anywhere → *continuous* zoom (Wave 3 mechanic 3c, §5.2): each gesture frame's
+ *    incremental factor + pan offset is forwarded to [onPinch]; the caller accumulates it in a
+ *    persistent [PinchZoom] and applies the transform to the SurfaceView container. The discrete
+ *    Fit/Fill/Crop presets stay on the `[⤢]` button so preset and pinch never fight (§5.2).
  *
- * The *continuous* anchored pinch (no snap, no release-spring — §5.1) and double-tap
- * accumulation are the Wave 3 hardening + CEO on-device gate; Wave 2 delivers the reachable,
- * discrete control the hardening refines.
+ * @param onPinch called per gesture frame with the incremental scale factor and pan delta.
  */
-internal fun Modifier.playerGestures(controller: PlayerController, onToggleChrome: () -> Unit): Modifier =
+internal fun Modifier.playerGestures(
+    controller: PlayerController,
+    onToggleChrome: () -> Unit,
+    onPinch: (zoomFactor: Float, pan: Offset) -> Unit,
+): Modifier =
     this
         .pointerInput(controller) {
             detectTapGestures(
@@ -38,21 +42,9 @@ internal fun Modifier.playerGestures(controller: PlayerController, onToggleChrom
             )
         }
         .pointerInput(controller) {
-            var cumulativeZoom = 1f
-            detectTransformGestures { _, _, zoom, _ ->
-                cumulativeZoom *= zoom
-                when {
-                    cumulativeZoom >= PlayerTokens.PINCH_ZOOM_IN_THRESHOLD -> {
-                        controller.setResizeMode(ResizeMode.Zoom)
-                        cumulativeZoom = 1f
-                    }
-
-                    cumulativeZoom <= PlayerTokens.PINCH_ZOOM_OUT_THRESHOLD -> {
-                        controller.setResizeMode(ResizeMode.Fit)
-                        cumulativeZoom = 1f
-                    }
-                }
-            }
+            // One persistent detector for the view's lifetime (§5.2): every frame's incremental
+            // factor is forwarded and accumulated by the caller — never reset per callback.
+            detectTransformGestures { _, pan, zoom, _ -> onPinch(zoom, pan) }
         }
 
 // Design §5 thirds: the left/right gesture zones each span one third of the surface width.

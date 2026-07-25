@@ -20,6 +20,13 @@ complexity:
     active: true
     ignoreAnnotated:
       - "Composable"
+  # Declarative @Composable layout (nested slots, gesture wiring, remembered state) runs long
+  # by nature — a Compose function is a UI tree, not imperative logic. Exempt them here the same
+  # way we exempt LongParameterList; non-Composable functions still hold the default 60-line cap.
+  LongMethod:
+    active: true
+    ignoreAnnotated:
+      - "Composable"
 
 style:
   active: true

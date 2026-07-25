@@ -6,6 +6,7 @@ import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.SeekParameters
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
+import androidx.media3.exoplayer.video.VideoFrameMetadataListener
 import com.jv.player.api.PlaybackSource
 
 /**
@@ -63,6 +64,26 @@ class JvPlayer private constructor(
     fun addListener(listener: Player.Listener) = exoPlayer.addListener(listener)
 
     fun removeListener(listener: Player.Listener) = exoPlayer.removeListener(listener)
+
+    private var frameMetadataListener: VideoFrameMetadataListener? = null
+
+    /**
+     * Sets (or clears, with `null`) a per-frame render callback. It fires each time the engine
+     * pushes a frame to the surface, delivering that frame's `presentationTimeUs` — the signal
+     * that proves the correct frame painted after a seek even while paused (plan §5.3). Pairs with
+     * [Player.Listener.onRenderedFirstFrame].
+     *
+     * The Media3 `VideoFrameMetadataListener` type is wrapped here so callers (`:player-ui`) need
+     * no `media3-exoplayer` dependency — they deal only in a `Long` presentation time, consistent
+     * with the encryption-agnostic, engine-free UI seam (plan §3.3/§10).
+     */
+    fun setOnVideoFrameRendered(onFrameRendered: ((presentationTimeUs: Long) -> Unit)?) {
+        frameMetadataListener?.let(exoPlayer::clearVideoFrameMetadataListener)
+        frameMetadataListener = onFrameRendered?.let { callback ->
+            VideoFrameMetadataListener { presentationTimeUs, _, _, _ -> callback(presentationTimeUs) }
+        }
+        frameMetadataListener?.let(exoPlayer::setVideoFrameMetadataListener)
+    }
 
     /** Releases the player and all engine resources deterministically. Idempotent per ExoPlayer. */
     fun release() = exoPlayer.release()
