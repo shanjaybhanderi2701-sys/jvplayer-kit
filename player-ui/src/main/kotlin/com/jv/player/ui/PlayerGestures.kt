@@ -55,11 +55,15 @@ internal fun Modifier.playerGestures(controller: PlayerController, onToggleChrom
             }
         }
 
+// Design §5 thirds: the left/right gesture zones each span one third of the surface width.
+private const val LEFT_ZONE_MAX_FRACTION = 1f / 3f
+private const val RIGHT_ZONE_MIN_FRACTION = 2f / 3f
+
 private fun zoneOf(x: Float, width: Int): Zone {
     if (width <= 0) return Zone.Center
     return when {
-        x < width / 3f -> Zone.Left
-        x > width * 2f / 3f -> Zone.Right
+        x < width * LEFT_ZONE_MAX_FRACTION -> Zone.Left
+        x > width * RIGHT_ZONE_MIN_FRACTION -> Zone.Right
         else -> Zone.Center
     }
 }

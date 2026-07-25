@@ -83,6 +83,9 @@ internal interface PlayerController {
  * releases it — so there is no double-release and no surface leak across recomposition.
  */
 @Stable
+// Façade implementing the wide PlayerController transport interface (play/pause/seek/resize/
+// bind/unbind/surface) — the member count is the interface surface, not incidental complexity.
+@Suppress("TooManyFunctions")
 internal class MediaPlayerController(
     private val engine: JvPlayer,
 ) : PlayerController {

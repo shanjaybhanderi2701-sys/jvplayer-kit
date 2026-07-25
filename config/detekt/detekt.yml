@@ -14,6 +14,12 @@ complexity:
   NestedBlockDepth:
     active: true
     threshold: 6
+  # @Composable components (slot APIs, styling knobs, test tags) routinely exceed the
+  # default parameter limit by convention — exempt them, as we already do for FunctionNaming.
+  LongParameterList:
+    active: true
+    ignoreAnnotated:
+      - "Composable"
 
 style:
   active: true
